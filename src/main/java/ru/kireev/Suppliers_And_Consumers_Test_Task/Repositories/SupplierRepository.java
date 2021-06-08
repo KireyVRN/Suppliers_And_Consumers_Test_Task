@@ -1,4 +1,4 @@
-package ru.kireev.Suppliers_And_Consumers_Test_Task.Repository;
+package ru.kireev.Suppliers_And_Consumers_Test_Task.Repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

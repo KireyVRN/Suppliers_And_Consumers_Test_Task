@@ -1,6 +1,7 @@
 package ru.kireev.Suppliers_And_Consumers_Test_Task.Entities;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import javax.persistence.*;
@@ -10,22 +11,21 @@ import java.util.Set;
 @Table(name = "consumer")
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(exclude = "products")
 public class Consumer {
 
     @Id
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "name")
     private String name;
 
     @Column(name = "city")
-    private String City;
+    private String city;
 
-    @ManyToMany()
-    @JoinTable(name = "consumer_product",
-            joinColumns = @JoinColumn(name = "consumer_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id", referencedColumnName = "id"))
+    @ManyToMany(mappedBy = "consumers", fetch = FetchType.EAGER)
     private Set<Product> products;
 
 }
