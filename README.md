@@ -1,3 +1,1 @@
-# Suppliers_And_Consumers_Test_Task
-
-К сожалению не справился с задачей. Но я обязательно выполню ее позже. Спасибо за внимание.
+working version
