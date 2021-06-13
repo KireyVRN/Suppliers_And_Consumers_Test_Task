@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Report</title>
+    <style type="text/css">
+    table,th,td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+    </style>
+</head>
+<body>
+<h3 style="font-size:30px" align="center">Отчёт</h3>
+
+<table style="width:100%; font-size:20px">
+    <th style="width:25%">Город</th>
+    <th style="width:25%">Продукт</th>
+    <th style="width:25%">Поставщик</th>
+    <th style="width:25%">Потребитель</th>
+</table>
+<table style="width:100%; font-size:20px">
+    <tr th:each="entry : ${d}">
+        <td style="width:25%" th:text="${entry.getKey()}">City</td>
+        <td style="width:75%">
+            <table style="width:100%; font-size:20px">
+                <tr th:each="product : ${entry.getValue()}">
+                    <td style="width:25%" th:text="${product.getProductName()}"> ProductName</td>
+                    <td style="width:25%">
+                        <div th:each="supplier : ${product.getSuppliers()}">
+                            <p th:text="${supplier}">Supplier</p>
+                        </div>
+                    </td>
+                    <td style="width:25%">
+                        <div th:each="consumer : ${product.getConsumers()}">
+                            <p th:text="${consumer}">Consumer</p>
+                        </div>
+                    </td>
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

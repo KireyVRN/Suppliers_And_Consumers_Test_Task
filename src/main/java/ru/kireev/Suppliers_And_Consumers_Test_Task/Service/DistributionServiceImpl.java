@@ -3,6 +3,7 @@ package ru.kireev.Suppliers_And_Consumers_Test_Task.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Dto.ProductGroup;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Entities.Consumer;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Entities.Product;
@@ -10,6 +11,7 @@ import ru.kireev.Suppliers_And_Consumers_Test_Task.Entities.Supplier;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Repositories.ConsumerRepository;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Repositories.ProductRepository;
 import ru.kireev.Suppliers_And_Consumers_Test_Task.Repositories.SupplierRepository;
+import ru.kireev.Suppliers_And_Consumers_Test_Task.config.ThymeLeafConfig;
 
 import javax.annotation.PostConstruct;
 import java.io.FileWriter;
@@ -28,6 +30,7 @@ public class DistributionServiceImpl implements DistributionService {
     private final ConsumerRepository consumerRepository;
     private final SupplierRepository supplierRepository;
     private final ProductRepository productRepository;
+    private final ThymeLeafConfig thymeLeafConfig;
 
     @Value("${pathToReportFile}")
     private String pathToReportFile;
@@ -38,6 +41,7 @@ public class DistributionServiceImpl implements DistributionService {
     }
 
     public void init() {
+
         Consumer consumer1 = consumerRepository.save(new Consumer().setName("Пятёрочка").setCity("Воронеж"));
         Consumer consumer2 = consumerRepository.save(new Consumer().setName("Магнит").setCity("Москва"));
         Consumer consumer3 = consumerRepository.save(new Consumer().setName("ВкусВилл").setCity("Москва"));
@@ -69,6 +73,7 @@ public class DistributionServiceImpl implements DistributionService {
     }
 
     public Map<String, List<ProductGroup>> collectDistributionData() {
+
         Map<String, List<Consumer>> consumersByCity = consumerRepository.findAll()
                 .stream()
                 .collect(Collectors.groupingBy(Consumer::getCity));
@@ -83,15 +88,14 @@ public class DistributionServiceImpl implements DistributionService {
                         city -> {
                             List<Consumer> consumers = consumersByCity.get(city);
                             List<Supplier> suppliers = suppliersByCity.get(city);
-
-                            Set<Product> commonItemGroups = getCommonItemGroups(consumers, suppliers);
-                            return createItemGroup(commonItemGroups, consumers, suppliers);
+                            Set<Product> commonProducts = getCommonProducts(consumers, suppliers);
+                            return createProductGroup(commonProducts, consumers, suppliers);
                         }
                 ));
-
     }
 
-    private List<ProductGroup> createItemGroup(Set<Product> products, List<Consumer> consumers, List<Supplier> suppliers) {
+    private List<ProductGroup> createProductGroup(Set<Product> products, List<Consumer> consumers, List<Supplier> suppliers) {
+
         return products
                 .stream()
                 .map(product -> new ProductGroup()
@@ -108,7 +112,7 @@ public class DistributionServiceImpl implements DistributionService {
                 .collect(Collectors.toList());
     }
 
-    private Set<Product> getCommonItemGroups(List<Consumer> consumers, List<Supplier> suppliers) {
+    private Set<Product> getCommonProducts(List<Consumer> consumers, List<Supplier> suppliers) {
 
         Set<Product> consumerProducts = consumers.stream()
                 .map(Consumer::getProducts)
@@ -124,12 +128,9 @@ public class DistributionServiceImpl implements DistributionService {
                 .stream()
                 .filter(supplierProducts::contains)
                 .collect(Collectors.toSet());
-
     }
 
-    private Set<String> getCommonCities(
-            Map<String, List<Consumer>> consumersByCity,
-            Map<String, List<Supplier>> suppliersByCity) {
+    private Set<String> getCommonCities(Map<String, List<Consumer>> consumersByCity, Map<String, List<Supplier>> suppliersByCity) {
 
         Set<String> consumersCities = consumersByCity.keySet();
         Set<String> suppliersCities = suppliersByCity.keySet();
@@ -144,71 +145,15 @@ public class DistributionServiceImpl implements DistributionService {
         createHtmlFile();
     }
 
-    public void createHtmlFile() {
+    private void createHtmlFile() {
 
-        /*  Корявый метод, пока что не смог создать HTML не для веб приложения с помощью шаблонизатора  */
+        Context thymeLeafContext = new Context();
 
         try (FileWriter fileWriter = new FileWriter(pathToReportFile + "/report.html")) {
 
-            fileWriter.write("<!DOCTYPE html>\n" +
-                    "<html lang=\"en\">\n" +
-                    "<head>\n" +
-                    "    <meta charset=\"UTF-8\">\n" +
-                    "    <title>Report</title>\n" +
-                    "</head>\n" +
-                    "<body>\n" +
-                    "<h3 style=\"font-size:30px\" align=\"center\">Отчёт</h3>\n" +
-                    "<table border=\"1\" style=\"width:100%; font-size:20px\">\n" +
-                    "    <tr>\n" +
-                    "        <th>Город</th>\n" +
-                    "        <th>Продукт</th>\n" +
-                    "        <th>Поставщик</th>\n" +
-                    "        <th>Потребитель</th>\n" +
-                    "    </tr>");
-
-            for (Map.Entry<String, List<ProductGroup>> entry : collectDistributionData().entrySet()) {
-
-                fileWriter.write("<tr>\n");
-                //City
-                fileWriter.write("<th>" + entry.getKey() + "</th>\n");
-
-                for (ProductGroup productGroup : entry.getValue()) {
-
-                    if (productGroup != entry.getValue().get(0)) {
-                        fileWriter.write("<tr>\n<th></th>\n");
-                    }
-
-                    //Product
-                    fileWriter.write("<th>" + productGroup.getProductName() + "</th>\n");
-
-                    fileWriter.write("<th>");
-                    for (String supplier : productGroup.getSuppliers()) {
-
-                        //Supplier
-                        fileWriter.write(supplier + "<br>");
-                    }
-                    fileWriter.write("</th>\n");
-
-
-                    fileWriter.write("<th>");
-                    for (String consumer : productGroup.getConsumers()) {
-
-                        //Consumer
-                        fileWriter.write(consumer + "<br>");
-                    }
-                    fileWriter.write("</th>\n");
-
-                    if (productGroup != entry.getValue().get(entry.getValue().size() - 1)) {
-                        fileWriter.write("</tr>\n");
-                    }
-                }
-                fileWriter.write("</tr>\n");
-            }
-
-            fileWriter.write("</table>\n" +
-                    "</body>\n" +
-                    "</html>");
-            fileWriter.flush();
+            thymeLeafContext.setVariable("d", collectDistributionData());
+            thymeLeafContext.setVariable("path", pathToReportFile);
+            thymeLeafConfig.templateEngine().process("templates/report.html", thymeLeafContext, fileWriter);
 
         } catch (IOException e) {
             e.printStackTrace();
